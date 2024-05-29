@@ -71,6 +71,56 @@ if os.path.exists(file_path):
 def wall_count(section):
     return len(section['interior_walls'])
 
+
+# Отбор секций с внутренними стенами заданной длины
+def filter_sections_by_wall_length(sections, target_length, tolerance):
+    # Массив для секций, которые удовлетворяют условиям
+    filtered_sections = []
+
+    # Проверка каждой секции
+    for section in sections:
+        has_wall_of_target_length = False
+
+        # Проверка каждой внутренней стены внутри секции
+        for wall in section['interior_walls']:
+            length = wall_length(wall)
+            # Сравниваем длину стены с заданной длиной с учетом погрешности
+            if abs(length - target_length) <= tolerance:
+                has_wall_of_target_length = True
+                break  # Переходим к следующей секции, если условие удовлетворено
+
+        # Если секция содержит стену заданной длины, добавляем ее в массив
+        if has_wall_of_target_length:
+            filtered_sections.append(section)
+
+    return filtered_sections
+
+# Функция, которая вычисляет длину стены
+def wall_length(wall):
+    return math.sqrt((wall['x2'] - wall['x1'])**2 + (wall['y2'] - wall['y1'])**2)
+
+def rand_section_by_wall(wall):
+    filtered = filter_sections_by_wall_length(sections, wall_length(wall), tolerance)
+    if len(filtered) == 0:
+        return None
+    else:
+        return random.choice(filtered)
+
+def add_sections(section1, section2):
+    # Найти угол между векторами внутренних стен и повернуть на него вторую секцию
+
+
+def choise_section(suitable_sections):
+    section = random.choice(suitable_sections)
+    if wall_count(section) == 0:
+        return section
+    else:
+        new_section = rand_section_by_wall(section['interior_walls'][0])
+        if new_section == None:
+            return None
+        else:
+            section = add_sections(section, new_section)
+
 if st.button('Запустить поиск планировок'):
     one_bedroom_percentage = st.session_state['one']
     two_bedroom_percentage = st.session_state['two']
@@ -84,10 +134,8 @@ if st.button('Запустить поиск планировок'):
 
     # Если есть хотя бы одна подходящая секция, выбираем из них случайную
     if suitable_sections:
-        section = random.choice(suitable_sections)
-        vertices = section['vertices']
-        st.write(section['building'] + " Секция: " + str(section['number']))
-        st.write("Количество внутренних стен: " + str(wall_count(section)))
+        section = choise_section(suitable_sections)
+
     else:
         # Обрабатываем ситуацию, когда нет подходящих секций
         st.write("Нет секций, удовлетворяющих заданным размерам.")
